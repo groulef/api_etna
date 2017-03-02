@@ -1,21 +1,7 @@
 require 'grape'
-
-module ApiEtna
-  class API < ::Grape::API
-    version 'v1'
-    format :json
-
-    resource :test do
-      desc 'test'
-      get '/' do
-        p "OLELELELELEL"
-      end
-    end
-    
-  end
-end
-
-
+# require 'app/controllers/application_controller.rb'
+require File.expand_path('../app/controllers/test_controller', __FILE__)
+require File.expand_path('../app/controllers/application_controller', __FILE__)
 # module API
 
 #   class Base < Grape::API
@@ -23,4 +9,4 @@ end
 #   end
 # end
 
-run ApiEtna::API
+run ApiEtna::ApplicationController
