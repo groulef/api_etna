@@ -37,6 +37,7 @@ GEM
       tool (~> 0.2)
     mustermann-grape (0.4.0)
       mustermann (= 0.4.0)
+    mysql (2.9.1)
     puma (3.7.1)
     rack (2.0.1)
     rack-accept (0.4.5)
@@ -56,6 +57,7 @@ PLATFORMS
 
 DEPENDENCIES
   grape
+  mysql (>= 2.9.1)
   puma
 
 BUNDLED WITH
