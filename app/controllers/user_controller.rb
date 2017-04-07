@@ -5,47 +5,58 @@ module ApiEtna
 	class UserController < ::Grape::API
     	format :json
 
-
-
 		resource :users do
 
-			# http_basic do |username, password|
-	  #   		p " user : #{username} pass : #{password}"
-	  #   		::Constants::DB_CO.query("SELECT role FROM user WHERE email='#{username}' AND password='#{password}'").each do |u|
-	  #   			p u
-	  #   		end
+			http_basic do |username, password|
+				user = 0
+	    		::Constants::DB_CO.query("SELECT * FROM user WHERE email=\"#{username}\"").each do |u|
+	    			user = u;
+	    		end
+	    		pass = Digest::SHA1.hexdigest password
 
-	  #   		# if user
-	  #   		# end
-	  #   	# { 'test' => 'password1' }[username] == password
-	  #   	end
-    		
-			
+	    		if user != 0 && {user["email"] => user["password"]}[username] == pass
+	    			if  user["role"] == "admin"
+	    				true
+	    			else
+	    				false
+		    		  	error!({"message" => "You must be admin"}, 403)
+	    			end
+	    		else
+	    		  	false
+	    		  	error!({"message" => "You must be connected"}, 401)
+	    		end
+	    	end
+
 			desc 'Add a user'
 			post '/' do
-				count = 0
+				count = res = 0
 				status_msg = ""
 				status_code = 0
-				::Constants::DB_CO.query("SELECT * FROM user WHERE email = '#{params[:email]}'").each do |e|
+				email = params[:email].nil? ? "" : ::Constants::DB_CO.escape(params[:email])
+				::Constants::DB_CO.query("SELECT * FROM user WHERE email = '#{email}'").each do |e|
 					count += 1
 				end
 
-				email = params[:email].nil? ? "" : ::Constants::DB_CO.escape(params[:email])
 				if count == 0 && email != ""
-					lastname = params[:lastname].nil? ? "" : ::Constants::DB_CO.escape(params[:lastname])
-					firstname = params[:firstname].nil? ? "" : ::Constants::DB_CO.escape(params[:firstname])
-					role = params[:role].nil? ? "" : ::Constants::DB_CO.escape(params[:role])
-					password = Digest::SHA1.hexdigest ::Constants::DB_CO.escape(params[:password])
+					p params
+					lastname = params[:lastname].nil? == false ? res += 1 : ::Constants::DB_CO.escape(params[:lastname])
+					firstname = params[:firstname].nil? == false ? res += 1 : ::Constants::DB_CO.escape(params[:firstname])
+					role = params[:role].nil? == false ? res += 1 : ::Constants::DB_CO.escape(params[:role])
+					password = params[:password].nil? == false ? res += 1 : ::Constants::DB_CO.escape(params[:password])
 
-					::Constants::DB_CO.query("INSERT INTO user (lastname, firstname, email, password, role) VALUES ('#{lastname}', '#{firstname}', '#{email}', '#{password}', '#{role}')")
-					status_msg = "Created User"
-					status_code = 201
+					if res != 0
+						::Constants::DB_CO.query("INSERT INTO user (lastname, firstname, email, password, role) VALUES ('#{lastname}', '#{firstname}', '#{email}', '#{password}', '#{role}')")
+						status_msg = "Created User"
+						status_code = 201
+					else
+						status_msg = "ErrorResponse"
+						status_code = 400
+					end
 				else
 					status_msg = "ErrorResponse"
 					status_code = 400 
 				end
-				res = {status: status_code, message: status_msg}
-				res
+				error!({"message" => status_msg}, status_code)				
 			end	      	
 	    end
 
