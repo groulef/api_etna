@@ -23,7 +23,6 @@ module ApiEtna
 
 			desc 'get all users - Route 5'
 			get '/' do
-				p params
 				query = "SELECT * FROM user"
 				users = []
 				::Constants::DB_CO.query(query).each do |u|
@@ -39,22 +38,20 @@ module ApiEtna
 				q = params[:q]
 				query = "SELECT id, firstname, lastname, email, role FROM user WHERE lastname LIKE \"%#{q}%\" AND email LIKE \"%#{q}%\""
 				verif_count = true if Float(params[:count]) rescue false
-				p verif_count
 				if params[:count] && verif_count == true
 					query += " LIMIT #{params[:count]}"
 				elsif params[:count] && verif_count == nil
 					status_code = 400
-					status_msg = "An error occurred"
+					status_msg = {"message" => "An error occurred"}
 				end
 				if status_code == 0
-					p query
 					users = []
 					::Constants::DB_CO.query(query).each do |u|
 						users << u
 					end
 					if users == []
 						status_code = 404
-						status_msg = "No user found"
+						status_msg = {"message" => "No user found"}
 					else
 						status_msg = users
 						status_code = 200
@@ -110,14 +107,14 @@ module ApiEtna
 				if count == 0 && roles_allowed.include?(role)
 					if res == 0
 						::Constants::DB_CO.query("INSERT INTO user (lastname, firstname, email, password, role) VALUES ('#{lastname}', '#{firstname}', '#{email}', '#{password}', '#{role}')")
-						status_msg = "User successfully created"
+						status_msg = {"message" => "User successfully created"}
 						status_code = 200
 					else
-						status_msg = "An error occured"
+						status_msg = {"message" => "An error occured"}
 						status_code = 400
 					end
 				else
-					status_msg = "An error occured"
+					status_msg = {"message" => "An error occured"}
 					status_code = 400 
 				end
 				status status_code
@@ -144,7 +141,7 @@ module ApiEtna
 	    	desc 'get user - Route 4'
 	    	get '/:uid' do
 				if ApiEtna::User.check_user(params[:uid]) == 0
-	      			status_msg = "User was not found"
+	      			status_msg = {"message" => "User was not found"}
 					status_code = 404
 				else
 		    		query = "SELECT id, lastname, firstname, email, role FROM user WHERE id = #{params[:uid]}"
@@ -185,7 +182,7 @@ module ApiEtna
 		    desc 'modifies a user - Route 2'
 	      	put '/:uid' do
 	      		if ApiEtna::User.check_user(params[:uid]) == 0
-	      			status_msg = "User was not found"
+	      			status_msg = {"message" => "User was not found"}
 					status_code = 404
 				else
 					roles_allowed = ["admin", "normal"]
@@ -193,16 +190,17 @@ module ApiEtna
 		      		query = "UPDATE user SET "
 		      		params.each do |key, value|
 		      			if allowed_params.include?(key)
-		      				query += " #{key} = '#{::Constants::DB_CO.escape(value)}',"
+		      				query += " #{key} = \"#{::Constants::DB_CO.escape(value)}\","
 		      			end
 		      		end
 		      		query = query.chop
 		      		query += " WHERE id = #{params[:uid]}"
 		      		if params[:role] && !roles_allowed.include?(params[:role])
-						status_msg = "An error occured"
+						status_msg = {"message" => "An error occured"}
 						status_code = 400 
 		      		else
-		      			status_msg = "User successfully modified"
+		      			::Constants::DB_CO.query(query)
+		      			status_msg = {"message" => "User successfully modified"}
 		      			status_code = 200
 		      		end
 		      	end
@@ -213,12 +211,12 @@ module ApiEtna
 		    desc 'deletes a user - Route 3'
 		    delete '/:uid' do
 	      		if ApiEtna::User.check_user(params[:uid]) == 0
-	      			status_msg = "User was not found"
+	      			status_msg = {"message" => "User was not found"}
 					status_code = 404
 				else
 			    	query = "DELETE FROM user WHERE id = #{params[:uid]}"
 			    	::Constants::DB_CO.query(query)
-			    	status_msg = "User successfully deleted"
+			    	status_msg = {"message" => "User successfully deleted"}
 			    	status_code = 200
 	    		end
 		      	status status_code
